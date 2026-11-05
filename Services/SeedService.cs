@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 //WM - Adding entity framework core for database ops
 using Microsoft.EntityFrameworkCore;
 
-
 namespace GroupProject.Services
 {
     public class SeedService
@@ -162,250 +161,253 @@ namespace GroupProject.Services
 
                 //WM - temporarily seeding some products for user to show a history of disposed items for testing.
                 //WM - specifically async to avoid any blockages
-                var normalUser = await userManager.FindByEmailAsync("user@gmail.com");//May need to change to 'member' to reflect new account. Member not seeded due to admin still present tho -RW
+                var normalUser = await userManager.FindByEmailAsync("user@gmail.com");
 
-                if(normalUser == null)
-                {//Ensures the User Exists before attempting to seed Histroy - RW
-                    throw new InvalidOperationException("Normal user not found. Ensure the user is seeded before seeding product history.");
-                }
-
-                //Checks if the user has a history already, if not creates one. - RW
-                var userHistory = await context.ProductHistories.FirstOrDefaultAsync(ph => ph.UserID == normalUser.Id);
-
-                if(userHistory == null)
+                UserHistory userHistory = null;
+                if (normalUser != null)
                 {
-                    userHistory = new ProductHistory
+                    userHistory = await context.UserHistories.FirstOrDefaultAsync(uh => uh.UserId == normalUser.Id);
+                    if (userHistory == null)
                     {
-                        UserID = normalUser.Id
-                    };
-                    context.ProductHistories.Add(userHistory);
-                    await context.SaveChangesAsync();
+                        userHistory = new UserHistory
+                        {
+                            UserId = normalUser.Id
+                        };
+                        context.UserHistories.Add(userHistory);
+                        await context.SaveChangesAsync();
+                    }
                 }
-                
-
 
                 //**Start of Item Seeding** - RW
-                //Seeding note - Most Household Electricals are recyclable. Some items listed are not, this is for testing prior to being overly specific
-                //as certain items if Fire Damaged can no longer be recycled. - RW
                 var catElectronics = context.Categories.First(c => c.CategoryName == "Small Electronics");
                 var catAppliances = context.Categories.First(c => c.CategoryName == "Large Appliances");
                 var catMobile = context.Categories.First(c => c.CategoryName == "Mobile Devices");
                 var locCentral = context.DisposalLocations.First(l => l.LocationName == "Glasgow Central Recycling");
 
-                //Checks if the item exists before adding to avoid duplicates
-                //This boolean is repeated for each item to ensure that the seeding process does not create duplicates if run multiple times. - RW
-                bool toasterExists =  await context.Items.AnyAsync(i => i.ItemName == "Broken Toaster" && i.HistoryID == userHistory.HistoryID);
-                if(!toasterExists)
+                Item item1 = null, item2 = null, item3 = null, item4 = null, item5 = null, item6 = null, item7 = null, item8 = null, item9 = null, item10 = null, item11 = null, item12 = null;
+
+                bool item1Exists = await context.Items.AnyAsync(i => i.ItemName == "Broken Toaster");
+                if (!item1Exists)
                 {
-                    var item1 = new Item
+                    item1 = new Item
                     {
                         ItemName = "Broken Toaster",
                         Description = "Ensure Appliance is Cool. Damaged Heating Element will not prevent Recycling. Take to nearest Recycling centre",
                         IsRecyclable = true,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.Kitchen,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-2)
                     };
                     context.Items.Add(item1);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item1, DisposalID = locCentral.DisposalID });
                 }
-               
-                bool smartphoneExists = await context.Items.AnyAsync(i => i.ItemName == "Old Smartphone" && i.HistoryID == userHistory.HistoryID);
-                if (!smartphoneExists)
+
+                bool item2Exists = await context.Items.AnyAsync(i => i.ItemName == "Old Smartphone");
+                if (!item2Exists)
                 {
-                    var item2 = new Item
+                    item2 = new Item
                     {
                         ItemName = "Old Smartphone",
                         Description = "If there is any obvious battery damage, do not attempt to power on or plug device in. Contact recycling centre and disclose any damage and follow advice.",
                         IsRecyclable = true,
                         CategoryID = catMobile.CategoryID,
                         RoomTag = RoomTag.Bedroom,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-5)
                     };
                     context.Items.Add(item2);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item2, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool laptopExists = await context.Items.AnyAsync(i => i.ItemName == "HP Laptop" && i.HistoryID == userHistory.HistoryID);
-                if(!laptopExists)
+
+                bool item3Exists = await context.Items.AnyAsync(i => i.ItemName == "HP Laptop");
+                if (!item3Exists)
                 {
-                    var item3 = new Item
+                    item3 = new Item
                     {
                         ItemName = "HP Laptop",
                         Description = "If battery can be removed safely, please do so. Then take to Recycling Centre of WEEE Collection point to be recycled",
                         IsRecyclable = true,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.Office,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-6)
                     };
                     context.Items.Add(item3);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item3, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool dellComputerExists = await context.Items.AnyAsync(i => i.ItemName == "Dell Computer" && i.HistoryID == userHistory.HistoryID);
-                if(!dellComputerExists)
+
+                bool item4Exists = await context.Items.AnyAsync(i => i.ItemName == "Dell Computer");
+                if (!item4Exists)
                 {
-                    var item4 = new Item
+                    item4 = new Item
                     {
                         ItemName = "Dell Computer",
                         Description = "Do not dispose in house bins. Take to Electronics Recycling Centre or WEEE Collection Point ",
                         IsRecyclable = true,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.Office,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow
                     };
                     context.Items.Add(item4);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item4, DisposalID = locCentral.DisposalID });
                 }
-               
-                bool iphoneExists = await context.Items.AnyAsync(i => i.ItemName == "IPhone Duo" && i.HistoryID == userHistory.HistoryID);
-                if(!iphoneExists)
+
+                bool item5Exists = await context.Items.AnyAsync(i => i.ItemName == "IPhone Duo");
+                if (!item5Exists)
                 {
-                    var item5 = new Item
+                    item5 = new Item
                     {
                         ItemName = "IPhone Duo",
                         Description = "If any battery damage, do not power on or attempt to plug device in. Contact Recycling Centre and report any Battery Damage and follow advice for recycling.",
                         IsRecyclable = true,
                         CategoryID = catMobile.CategoryID,
                         RoomTag = RoomTag.Bedroom,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow
                     };
                     context.Items.Add(item5);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item5, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool fridgeExists =  await context.Items.AnyAsync(i => i.ItemName == "Samsung Smart Fridge" && i.HistoryID == userHistory.HistoryID);
-                if (!fridgeExists)
+
+                bool item6Exists = await context.Items.AnyAsync(i => i.ItemName == "Samsung Smart Fridge");
+                if (!item6Exists)
                 {
-                    var item6 = new Item
+                    item6 = new Item
                     {
                         ItemName = "Samsung Smart Fridge",
                         Description = "Only to be Recycled at Authorized Centres, Retailers or Take-back services. Check with Manufacturer or Local Recycling centres for adivce.",
                         IsRecyclable = false,
                         CategoryID = catAppliances.CategoryID,
                         RoomTag = RoomTag.Kitchen,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-10)
                     };
                     context.Items.Add(item6);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item6, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool smokeDetectorExists =  await context.Items.AnyAsync(i => i.ItemName == "Smoke Detector" && i.HistoryID == userHistory.HistoryID);
-                if (!smokeDetectorExists)
+
+                bool item7Exists = await context.Items.AnyAsync(i => i.ItemName == "Smoke Detector");
+                if (!item7Exists)
                 {
-                    var item7 = new Item
+                    item7 = new Item
                     {
                         ItemName = "Smoke Detector",
                         Description = "CAUTION:Some Smoke Detectors contain small amounts of Radioactive material.\nIf safe to do so, remove battery. DO NOT, needlessly dismantle. Take to Recycling Centre that accepts Smoke Alarms to ensure proper, safe disposal.",
                         IsRecyclable = false,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.Other,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-2)
                     };
                     context.Items.Add(item7);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item7, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool lcdTvExists =  await context.Items.AnyAsync(i => i.ItemName == "LCD Television" && i.HistoryID == userHistory.HistoryID);
-                if(!lcdTvExists)
+
+                bool item8Exists = await context.Items.AnyAsync(i => i.ItemName == "LCD Television");
+                if (!item8Exists)
                 {
-                    var item8 = new Item
+                    item8 = new Item
                     {
                         ItemName = "LCD Television",
                         Description = "Do not place in general Electronics Collections. Take to Recycling Centre that accepts these Screen Types to ensure safe disposal",
                         IsRecyclable = false,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.LivingRoom,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-1)
                     };
                     context.Items.Add(item8);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item8, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool dvdPlayerExists =  await context.Items.AnyAsync(i => i.ItemName == "DvD Player" && i.HistoryID == userHistory.HistoryID);
-                if(!dvdPlayerExists)
+
+                bool item9Exists = await context.Items.AnyAsync(i => i.ItemName == "DvD Player");
+                if (!item9Exists)
                 {
-                    var item9 = new Item
+                    item9 = new Item
                     {
                         ItemName = "DvD Player",
                         Description = "If safe to do so, remove any disk from player. DO NOT Dismantle player. Take to Recycling Centre for Recycling.",
                         IsRecyclable = true,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.LivingRoom,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow
                     };
                     context.Items.Add(item9);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item9, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool tvRemoteExists = await context.Items.AnyAsync(i => i.ItemName == "TV Remote" && i.HistoryID == userHistory.HistoryID);
-                if(!tvRemoteExists)
+
+                bool item10Exists = await context.Items.AnyAsync(i => i.ItemName == "TV Remote");
+                if (!item10Exists)
                 {
-                    var item10 = new Item
+                    item10 = new Item
                     {
                         ItemName = "TV Remote",
                         Description = "Remove Batteries and Dispose in Battery collection points. Take Remote to small electricals facility",
                         IsRecyclable = true,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.LivingRoom,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-5)
                     };
                     context.Items.Add(item10);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item10, DisposalID = locCentral.DisposalID });
                 }
-                
-                bool ps3Exists =  await context.Items.AnyAsync(i => i.ItemName == "PS3" && i.HistoryID == userHistory.HistoryID);
-                if(!ps3Exists)
+
+                bool item11Exists = await context.Items.AnyAsync(i => i.ItemName == "PS3");
+                if (!item11Exists)
                 {
-                    var item11 = new Item
+                    item11 = new Item
                     {
                         ItemName = "PS3",
                         Description = "If safe to do so, remove any Disk inside console. DO NOT Dismantle. Take to Electrical Recycling Centre.",
                         IsRecyclable = true,
                         CategoryID = catElectronics.CategoryID,
                         RoomTag = RoomTag.LivingRoom,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-7)
                     };
                     context.Items.Add(item11);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item11, DisposalID = locCentral.DisposalID });
                 }
 
-                bool acUnitExists =  await context.Items.AnyAsync(i => i.ItemName == "Air Conditioning Unit" && i.HistoryID == userHistory.HistoryID);
-                if(!acUnitExists)
+                bool item12Exists = await context.Items.AnyAsync(i => i.ItemName == "Air Conditioning Unit");
+                if (!item12Exists)
                 {
-                    var item12 = new Item
+                    item12 = new Item
                     {
                         ItemName = "Air Conditioning Unit",
                         Description = "Contact Recycling Centre that accepts these units and follow advice given.\nCAUTION: Do not attempt to move due to Toxi Refrigerants. DO NOT Cut Pipes or Dismantle any part of Unit.",
                         IsRecyclable = false,
                         CategoryID = catAppliances.CategoryID,
                         RoomTag = RoomTag.Other,
-                        HistoryID = userHistory.HistoryID,
                         DateAdded = DateTime.UtcNow.AddDays(-11)
                     };
                     context.Items.Add(item12);
                     context.ItemDisposals.Add(new ItemDisposal { Item = item12, DisposalID = locCentral.DisposalID });
                 }
 
-                await context.SaveChangesAsync();
+                if (userHistory != null)
+                {
+                    await context.SaveChangesAsync();
 
-                
+                    // WM - creating the junction table so i can link items to the user's history and disposal locs
+                    if (item1 != null && item2 != null && item3 != null && item4 != null && item5 != null && item6 != null && item7 != null && item8 != null && item9 != null && item10 != null && item11 != null && item12 != null)
+                    {
+                        context.UserHistoryItems.AddRange(
+                            new UserHistoryItem { ItemId = item1.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item1.DateAdded },
+                            new UserHistoryItem { ItemId = item2.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item2.DateAdded },
+                            new UserHistoryItem { ItemId = item3.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item3.DateAdded },
+                            new UserHistoryItem { ItemId = item4.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item4.DateAdded },
+                            new UserHistoryItem { ItemId = item5.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item5.DateAdded },
+                            new UserHistoryItem { ItemId = item6.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item6.DateAdded },
+                            new UserHistoryItem { ItemId = item7.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item7.DateAdded },
+                            new UserHistoryItem { ItemId = item8.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item8.DateAdded },
+                            new UserHistoryItem { ItemId = item9.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item9.DateAdded },
+                            new UserHistoryItem { ItemId = item10.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item10.DateAdded },
+                            new UserHistoryItem { ItemId = item11.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item11.DateAdded },
+                            new UserHistoryItem { ItemId = item12.ItemID, UserHistoryId = userHistory.UserHistoryId, DateDisposed = item12.DateAdded }
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                await context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "An error occurred while seeding the database.");
-
             }
         }
     }
